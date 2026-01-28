@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TrueLens – AI Image Detector</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .card {
+    background: #020617;
+    padding: 25px 30px;
+    border-radius: 12px;
+    width: 360px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+
+  h2 {
+    margin-bottom: 10px;
+    color: #38bdf8;
+  }
+
+  select, input[type="file"], button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+  }
+
+  select, input[type="file"] {
+    background: #020617;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+  }
+
+  button {
+    background: #38bdf8;
+    color: #020617;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  button:hover {
+    background: #0ea5e9;
+  }
+
+  .result {
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  /* ---------- LOADER ---------- */
+  .loader {
+    border: 4px solid #1e293b;
+    border-top: 4px solid #38bdf8;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 15px auto;
+    display: none;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>🕵️ TrueLens</h2>
+  <p>AI‑Generated Image Detection</p>
+
+  <select id="model">
+    <option value="baseline">Baseline (RGB)</option>
+    <option value="fusion">Improved (RGB + FFT)</option>
+  </select>
+
+  <input type="file" id="image" accept="image/*">
+
+  <button onclick="checkImage()">Check Image</button>
+
+  <div class="loader" id="loader"></div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+async function checkImage() {
+  const fileInput = document.getElementById("image");
+  const model = document.getElementById("model").value;
+  const result = document.getElementById("result");
+  const loader = document.getElementById("loader");
+
+  if (!fileInput.files.length) {
+    result.innerText = "❌ Please upload an image";
+    return;
+  }
+
+  // Show loader
+  loader.style.display = "block";
+  result.innerText = "";
+
+  let formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  formData.append("model_type", model);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/predict", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    result.innerHTML =
+      `✅ Prediction: <span style="color:#22c55e">${data.prediction}</span><br>
+       Confidence: ${(data.confidence * 100).toFixed(2)}%`;
+  }
+  catch (err) {
+    result.innerText = "❌ Server error. Is backend running?";
+  }
+  finally {
+    loader.style.display = "none";
+  }
+}
+</script>
+
+</body>
+</html>
